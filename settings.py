@@ -13,3 +13,6 @@ ELASTICSEARCH_CONNECTION = {
     'host': '127.0.0.1',
     'port': 9200,
 }
+
+# Keyspace (Cassandra) or Index (ElasticSearch) to connect
+DATABASE = "sync"

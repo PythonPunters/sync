@@ -1,5 +1,6 @@
 """
-Write Something here
+This module manage all Cassandra actions that will
+be usefull to synchronize data with ElasticSearch
 """
 
 from settings import *
@@ -11,5 +12,5 @@ def get_cassandra_conn():
     Write something here
     """
     cluster = Cluster(**CASSANDRA_CONNECTION)
-    # session = cluster.connect("sync")
-    return cluster
+    session = cluster.connect(DATABASE)
+    return session
