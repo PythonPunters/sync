@@ -100,3 +100,15 @@ class ElasticSearchDAO():
                 return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
+
+    def delete(self, doc_type, id):
+        """
+        Delete a document by given id
+        :param doc_type: Type of elasticsearch document
+        :param id: Document id
+        :return the status of document delete
+        """
+        try:
+            return self.es.delete(index=DATABASE, doc_type=doc_type, id=id)
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s", ex)
