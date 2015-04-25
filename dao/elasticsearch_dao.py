@@ -1,11 +1,11 @@
-from elasticsearch.exceptions import ConnectionError
 from settings import *
 import elasticsearch
 import logging
 import time
 
 # starting the logger
-logger = logging.getLogger("elasticsearch_dao")
+logging.basicConfig(filename=LOG_DIR + 'elasticsearch_dao.log', level=logging.DEBUG)
+logger = logging.getLogger("ElasticSearchDAO")
 
 
 class ElasticSearchDAO():
@@ -16,6 +16,7 @@ class ElasticSearchDAO():
 
     def __init__(self):
         # creating connection
+        logger.info("Creating connection")
         self.es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
 
     def __create_doc_type(self, name):
@@ -31,7 +32,7 @@ class ElasticSearchDAO():
             else:
                 logger.error("doc_type already exists!")
         except Exception as ex:
-            logger.error("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s", ex)
 
     def __get_all_data(self, doc_type=None):
         """
@@ -42,10 +43,10 @@ class ElasticSearchDAO():
         result = []
         try:
             for r in self.es.search(index=DATABASE, doc_type=doc_type)['hits']['hits']:
-                logger.info("Found document %s", r)
+                logging.info("Found document %s", r)
                 result.append(r)
         except Exception as ex:
-            logger.error("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s", ex)
         return result
 
     def __cleaned_data(self, doc_type=None):
@@ -60,7 +61,7 @@ class ElasticSearchDAO():
                 logger.info("Found document _source %s", r)
                 result.append(r['_source'])
         except Exception as ex:
-            logger.error("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s", ex)
         return result
 
     def __get_doc_types(self, doc_type=None):
@@ -75,7 +76,7 @@ class ElasticSearchDAO():
                 logger.info("Found doc_type %s", r)
                 doc_types.append(r)
         except Exception as ex:
-            logger.error("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s", ex)
 
         return doc_types
 
@@ -98,4 +99,4 @@ class ElasticSearchDAO():
                 logger.info("Updating the document with id: %f", id)
                 return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
         except Exception as ex:
-            logger.error("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s", ex)

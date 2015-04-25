@@ -2,6 +2,11 @@
 Sync settings
 """
 
+import os
+
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+LOG_DIR = BASE_DIR + '/logs/'
+
 # Cassandra Connection
 CASSANDRA_CONNECTION = {
     'contact_points': ['127.0.0.1'],
