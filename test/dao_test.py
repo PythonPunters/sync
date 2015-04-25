@@ -1,15 +1,35 @@
 import unittest
+import time
 
 
-class TestCassandraConnection(unittest.TestCase):
+class TestCassandraDAO(unittest.TestCase):
     """
     Write something here
     """
+
     pass
 
 
-class TestElasticSearchConnection(unittest.TestCase):
+class TestElasticSearchDAO(unittest.TestCase):
     """
-    Write something here
+    ElasticSearchDAO Test Case
     """
-    pass
+
+    def setUp(self):
+        self.generated_id = time.time()
+        self.new_data = {}
+        self.same_data = {}
+        self.updated_data = {}
+
+
+    def test_insert(self):
+        pass
+
+    def test_update(self):
+        pass
+
+    def test_delete(self):
+        pass
+
+    def doCleanups(self):
+        pass

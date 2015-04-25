@@ -19,21 +19,6 @@ class ElasticSearchDAO():
         logger.info("Creating connection")
         self.es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
 
-    def __create_doc_type(self, name):
-        """
-        Create a doc_type inside an index
-        :param name: Name of the doc_typel
-        :return the status of document creation
-        """
-        try:
-            if name not in self.__get_doc_types():
-                logger.info("Creating a new doc_type")
-                return self.es.create(DATABASE, doc_type=name, body={}, id=time.time())
-            else:
-                logger.error("doc_type already exists!")
-        except Exception as ex:
-            logger.exception("An error ocurred. More info: %s", ex)
-
     def __get_all_data(self, doc_type=None):
         """
         Retrieve doc_types cleaned data
@@ -79,6 +64,21 @@ class ElasticSearchDAO():
             logger.exception("An error ocurred. More info: %s", ex)
 
         return doc_types
+
+    def create_doc_type(self, name):
+        """
+        Create a doc_type inside an index
+        :param name: Name of the doc_typel
+        :return the status of document creation
+        """
+        try:
+            if name not in self.__get_doc_types():
+                logger.info("Creating a new doc_type")
+                return self.es.create(DATABASE, doc_type=name, body={}, id=time.time())
+            else:
+                logger.error("doc_type already exists!")
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s", ex)
 
     def insert(self, doc_type, body, id=None):
         """
