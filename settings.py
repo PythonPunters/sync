@@ -15,4 +15,4 @@ ELASTICSEARCH_CONNECTION = {
 }
 
 # Keyspace (Cassandra) or Index (ElasticSearch) to connect
-DATABASE = "sync"
+DATABASE = "movies"

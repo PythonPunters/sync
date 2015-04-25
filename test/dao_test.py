@@ -1,6 +1,3 @@
-"""
-Write something here
-"""
 import unittest
 
 

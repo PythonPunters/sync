@@ -1,76 +1,85 @@
-"""
-This module manage all ElasticSearch actions that will
-be usefull to synchronize data with Cassandra
-"""
-from elasticsearch.exceptions import TransportError
-
 from settings import *
 import elasticsearch
 import logging
 import uuid
+import time
+
+# starting the logger
+logger = logging.getLogger("ElasticSearchDAO")
 
 
-def _conn():
+class ElasticSearchDAO():
     """
-    Connect to ElasticSearch
+    This class manage all ElasticSearch actions that will
+    be usefull to synchronize data with Cassandra
     """
-    es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
-    return es
 
+    def __init__(self):
+        # creating connection
+        self.es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
 
-def _results():
-    """
-    Retrieve all data in the index's doc_types
-    """
-    res = _conn().search(index=DATABASE)['hits']['hits']
-    return res
+    def __create_doc_type(self, name):
+        """
+        Create a doc_type inside an index
+        :param name: Name of the doc_typel
+        :return the status of document creation
+        """
+        if name not in self.__get_doc_types():
+            logger.info("Creating a new doc_type")
+            return self.es.create(DATABASE, doc_type=name, body={}, id=time.time())
+        else:
+            logger.error("doc_type already exists!")
 
+    def __get_all_data(self, doc_type=None):
+        """
+        Retrieve doc_types cleaned data
+        :param doc_type: Filter by doc_type
+        :return a bit cleaned list of existing documents
+        """
+        result = []
+        for r in self.es.search(index=DATABASE, doc_type=doc_type)['hits']['hits']:
+            logger.info("Found document %s", r)
+            result.append(r)
+        return result
 
-def _get_doc_types():
-    """
-    Retrive all index's doc_types names
-    """
-    for r in _results():
-        print(r['_type'])
+    def __cleaned_data(self, doc_type=None):
+        """
+        Retrieve document _source
+        :param doc_type: Filter by doc_type
+        :return a list of documents without any extra information
+        """
+        result = []
+        for r in self.__get_all_data(doc_type=doc_type):
+            logger.info("Found document _source %s", r)
+            result.append(r['_source'])
+        return result
 
+    def __get_doc_types(self, doc_type=None):
+        """
+        Retrive all index's doc_types' names
+        :param doc_type: Filter by doc_type
+        :return list of all doc_types
+        """
+        doc_types = []
+        for r in self.__get_all_data(doc_type=doc_type):
+            logger.info("Found doc_type %s", r)
+            doc_types.append(r)
 
-def insert(doc_type, body):
-    """
-    Insert data to an specific doc_type
-    """
-    try:
-        _conn().create(index=DATABASE, doc_type=doc_type, body=body)
-        logging.info("Document inserted")
-    except Exception as ex:
-        logging.error("Unexpected Error. Details: " + str(ex))
+        return doc_types
 
-
-def update(doc_type, uuid, body):
-    """
-    Update row to an specific doc_type
-    """
-    pass
-
-
-def create_doc_type(**kwargs):
-    """
-    Create doc_type (table) inside an index
-    """
-    _conn().index()
-
-
-def show_all():
-    """
-    Retrieve doc_types cleaned data
-    """
-    results = []
-    for r in _results():
-        results.append(r['_source'])
-
-    return results
-
-
-body = {"id": str, "name": "Adriane Maria"}
-# _conn().delete(index=DATABASE, doc_type="t1", id="nkiLdJQXSE-4YTbXu3Nw3g")
-# insert(doc_type="t1", body=body)
-print(show_all())
+    def insert(self, doc_type, body, id=None):
+        """
+        Insert or update doc_type data
+        :param doc_type: Type of elasticsearch document
+        :param body: Document content
+        :param id: Document id. If it's none, insert data to an document, else update it
+        :return the status of document insert/update
+        """
+        if not id:
+            # create a new document
+            logger.info("Creating a new document")
+            return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=time.time())
+        else:
+            # update the document
+            logger.info("Updating the document with id: %f", id)
+            return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
