@@ -10,7 +10,7 @@ LOG_DIR = BASE_DIR + '/logs/'
 # Cassandra Connection
 CASSANDRA_CONNECTION = {
     'contact_points': ['127.0.0.1'],
-    'port': 9042,
+    'port': 9043,
 }
 
 # ElasticSearch Connection
