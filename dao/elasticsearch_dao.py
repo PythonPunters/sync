@@ -4,7 +4,7 @@ import logging
 import uuid
 
 # starting the logger
-logging.basicConfig(filename=LOG_DIR + 'elasticsearch_dao.log', level=logging.DEBUG)
+logging.basicConfig(filename=LOG_DIR + 'elasticsearch_dao.log', level=logging.DEBUG, filemode='w')
 logger = logging.getLogger("ElasticSearchDAO")
 
 
@@ -61,6 +61,7 @@ class ElasticSearchDAO():
             id_list.append(str(r['_id']))
         generated_id = str(uuid.uuid4())
         if generated_id in id_list:
+            logger.info("Creating a new uuid")
             self.__generate_id()
         return generated_id
 
@@ -73,7 +74,8 @@ class ElasticSearchDAO():
         try:
             if name not in self.__get_doc_types():
                 logger.info("Creating a new doc_type")
-                return self.es.create(DATABASE, doc_type=name, body={}, id=str(uuid.uuid4()))
+                self.es.create(DATABASE, doc_type=name, body={}, id=str(uuid.uuid4()))
+                return "Document created."
             else:
                 logger.error("doc_type already exists!")
         except Exception as ex:
@@ -112,17 +114,19 @@ class ElasticSearchDAO():
                 if body not in self.__cleaned_data():
                     logger.info("Creating a new document")
                     generated_id = self.__generate_id()
-                    return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=generated_id)
+                    self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=generated_id)
+                    return "Document inserted."
                 else:
                     logger.error("Document already exists.")
-                    return "Not inserted."
+                    return "Document not inserted."
             else:
                 # update the document
-                logger.info("Updating the document with id: %f", id)
+                logger.info("Updating the document with id: %s", str(id))
                 if id in id_list:
-                    return self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
+                    self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
+                    return "Document updated."
                 else:
-                    logger.error("Id %f não encontrado.", id)
+                    logger.error("Id %s não encontrado.", str(id))
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
 
@@ -134,8 +138,9 @@ class ElasticSearchDAO():
         :return the status of document delete
         """
         try:
-            logger.info("Deleting document with id %f", id)
-            return self.es.delete(index=DATABASE, doc_type=doc_type, id=id)
+            logger.info("Deleting document with id %s", str(id))
+            self.es.delete(index=DATABASE, doc_type=doc_type, id=id)
+            return "Document deleted."
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
-            return "Not deleted."
+            return "Document not deleted."
