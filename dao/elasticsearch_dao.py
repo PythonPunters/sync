@@ -96,7 +96,7 @@ class ElasticSearchDAO():
             logger.exception("An error ocurred. More info: %s", ex)
         return result
 
-    def insert(self, doc_type, body, id=None):
+    def save(self, doc_type, body, id=None):
         """
         Insert or update doc_type data
         :param doc_type: Type of elasticsearch document
@@ -104,6 +104,7 @@ class ElasticSearchDAO():
         :param id: Document id. If it's none, insert data to an document, else update it
         :return the status of document insert/update
         """
+        msg = ""
         try:
             id_list = []
             for r in self.get_all_data():
@@ -115,20 +116,24 @@ class ElasticSearchDAO():
                     logger.info("Creating a new document")
                     generated_id = self.__generate_id()
                     self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=generated_id)
-                    return "Document inserted."
+                    msg = "Document inserted."
                 else:
                     logger.error("Document already exists.")
-                    return "Document not inserted."
+                    msg = "Document not inserted."
             else:
                 # update the document
                 logger.info("Updating the document with id: %s", str(id))
                 if id in id_list:
                     self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
-                    return "Document updated."
+                    msg = "Document updated."
                 else:
                     logger.error("Id %s não encontrado.", str(id))
+                    msg = "Id %s não encontrado.", str(id)
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
+            msg = "An error occurred."
+
+        return msg
 
     def delete(self, doc_type, id):
         """
@@ -137,10 +142,13 @@ class ElasticSearchDAO():
         :param id: Document id
         :return the status of document delete
         """
+        msg = ""
         try:
             logger.info("Deleting document with id %s", str(id))
             self.es.delete(index=DATABASE, doc_type=doc_type, id=id)
-            return "Document deleted."
+            msg = "Document deleted."
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
-            return "Document not deleted."
+            msg = "Document not deleted."
+
+        return msg
