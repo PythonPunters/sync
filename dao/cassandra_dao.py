@@ -1,6 +1,7 @@
 from settings import *
 from cassandra.cluster import Cluster, NoHostAvailable
 import logging
+import uuid
 
 
 # starting the logger
@@ -26,11 +27,60 @@ class CassandraDAO():
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
 
-    def insert(self):
+    def __generate_id(self):
+        """
+        Generate an uuid4 if it does not exists
+        :return a generated id
+        """
+        id_list = []
+        for r in self.get_all_data():
+            logger.info("Id %s found.", r['_id'])
+            id_list.append(str(r['_id']))
+        generated_id = str(uuid.uuid4())
+        if generated_id in id_list:
+            logger.info("Creating a new uuid")
+            self.__generate_id()
+        return generated_id
+
+    def get_all_data(self, doc_type=None):
         pass
+
+    def save(self, keyspace, body, id=None):
+        """
+        Insert or update doc_type data
+        :param doc_type: Type of elasticsearch document
+        :param body: Document content
+        :param id: Document id. If it's none, insert data to an document, else update it
+        :return the status of document insert/update
+        """
+        try:
+            if not id:
+                # insert a new data
+                body[id] = self.__generate_id()
+                query = 'INSERT INTO ' + keyspace + ' ' \
+                        + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
+                        ' VALUES ' + str(tuple(body.values()))
+                print(query)
+            else:
+                pass
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s", ex)
 
     def delete(self):
         pass
 
 
+body = {
+    "director": [
+        "Don Hall",
+        "Chris Williams"
+    ],
+    "year": 2014,
+    "genres": [
+        "Comédia",
+        "Animação"
+    ],
+    "title": "Big Hero 6"
+}
 cs = CassandraDAO()
+cs.save(keyspace=DATABASE, body=body)
