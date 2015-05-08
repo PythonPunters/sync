@@ -32,29 +32,25 @@ class CassandraDAO():
         Generate an uuid4 if it does not exists
         :return a generated id
         """
+        id_list = []
+        for r in self.get_all_data(table=table):
+            logger.info("Id %s found.", r['id'])
+            id_list.append(str(r['id']))
+
         logger.info("Generating a new uuid.")
         generated_id = str(uuid.uuid4())
-        if generated_id in self.__get_all_ids(table=table):
+
+        if generated_id in id_list:
             logger.info("Uuid already exists. Generating it again.")
             self.__generate_id(table=table)
+
         return str(generated_id)
-
-    def __get_all_ids(self, table):
-        query = "SELECT id FROM %s" % table
-        rows = self.cs.execute(query)
-        ids = []
-        logger.info("Getting all table ids.")
-        for row in rows:
-            ids.append(row.id)
-
-        return ids
 
     def get_all_data(self, table):
         query = 'SELECT * FROM %s' % table
         rows = self.cs.execute(query)
         result = []
         for row in rows:
-            # print(dir(row))
             result.append(dict(row._asdict()))
 
         print(result)
