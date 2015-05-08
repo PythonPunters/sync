@@ -40,7 +40,7 @@ class CassandraDAO():
         return str(generated_id)
 
     def __get_all_ids(self, table):
-        query = "SELECT id FROM " + table
+        query = "SELECT id FROM %s" % table
         rows = self.cs.execute(query)
         ids = []
         logger.info("Getting all table ids.")
@@ -48,6 +48,17 @@ class CassandraDAO():
             ids.append(row.id)
 
         return ids
+
+    def get_all_data(self, table):
+        query = 'SELECT * FROM %s' % table
+        rows = self.cs.execute(query)
+        result = []
+        for row in rows:
+            # print(dir(row))
+            result.append(dict(row._asdict()))
+
+        print(result)
+        return result
 
     def save(self, table, body, id=None):
         """
@@ -90,4 +101,5 @@ body = {
     "title": "Big Hero 6"
 }
 cs = CassandraDAO()
-cs.save(table='movie', body=body)
+# cs.save(table='movie', body=body)
+cs.get_all_data(table='movie')
