@@ -18,34 +18,38 @@ class CassandraDAO():
     def __init__(self):
         # creating connection
         try:
-            logger.info("Creating connection")
+            logger.info("Creating connection.")
             self.cluster = Cluster(**CASSANDRA_CONNECTION)
             self.cs = self.cluster.connect(DATABASE)
-            self.cs.execute("USE %s", DATABASE)
+            self.cs.execute("USE %s" % DATABASE)
         except NoHostAvailable as ex:
-            logger.exception("Invalid host name. More info: %s", ex)
+            logger.exception("Invalid host name. More info: %s" % ex)
         except Exception as ex:
-            logger.exception("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s" % ex)
 
-    def __generate_id(self):
+    def __generate_id(self, table):
         """
         Generate an uuid4 if it does not exists
         :return a generated id
         """
-        id_list = []
-        for r in self.get_all_data():
-            logger.info("Id %s found.", r['_id'])
-            id_list.append(str(r['_id']))
+        logger.info("Generating a new uuid.")
         generated_id = str(uuid.uuid4())
-        if generated_id in id_list:
-            logger.info("Creating a new uuid")
-            self.__generate_id()
-        return generated_id
+        if generated_id in self.__get_all_ids(table=table):
+            logger.info("Uuid already exists. Generating it again.")
+            self.__generate_id(table=table)
+        return str(generated_id)
 
-    def get_all_data(self, doc_type=None):
-        pass
+    def __get_all_ids(self, table):
+        query = "SELECT id FROM " + table
+        rows = self.cs.execute(query)
+        ids = []
+        logger.info("Getting all table ids.")
+        for row in rows:
+            ids.append(row.id)
 
-    def save(self, keyspace, body, id=None):
+        return ids
+
+    def save(self, table, body, id=None):
         """
         Insert or update doc_type data
         :param doc_type: Type of elasticsearch document
@@ -56,15 +60,18 @@ class CassandraDAO():
         try:
             if not id:
                 # insert a new data
-                body[id] = self.__generate_id()
-                query = 'INSERT INTO ' + keyspace + ' ' \
+                logger.info("Inserting a new data.")
+                body['id'] = self.__generate_id(table=table)
+                query = 'INSERT INTO ' + table + ' ' \
                         + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
                         ' VALUES ' + str(tuple(body.values()))
-                print(query)
+
+                logger.info("Query: %s" % query)
+                self.cs.execute(query)
             else:
-                pass
+                print('I am here')
         except Exception as ex:
-            logger.exception("An error ocurred. More info: %s", ex)
+            logger.exception("An error ocurred. More info: %s" % ex)
 
     def delete(self):
         pass
@@ -83,4 +90,4 @@ body = {
     "title": "Big Hero 6"
 }
 cs = CassandraDAO()
-cs.save(keyspace=DATABASE, body=body)
+cs.save(table='movie', body=body)
