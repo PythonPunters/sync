@@ -30,7 +30,8 @@ class CassandraDAO():
     def __generate_id(self, table):
         """
         Generate an uuid4 if it does not exists
-        :return a generated id
+        :param table: Keyspace's table
+        :return: A generated id
         """
         id_list = []
         for r in self.get_all_data(table=table):
@@ -47,6 +48,10 @@ class CassandraDAO():
         return str(generated_id)
 
     def get_all_data(self, table):
+        """
+        :param table: Keyspace's table
+        :return: List with all table's data
+        """
         query = 'SELECT * FROM %s' % table
         rows = self.cs.execute(query)
         result = []
@@ -59,10 +64,10 @@ class CassandraDAO():
     def save(self, table, body, id=None):
         """
         Insert or update doc_type data
-        :param doc_type: Type of elasticsearch document
+        :param table: Keyspace's table
         :param body: Document content
-        :param id: Document id. If it's none, insert data to an document, else update it
-        :return the status of document insert/update
+        :param id: Row id. If it's none, insert data, else update it
+        :return: The status of row insert/update
         """
         try:
             if not id:

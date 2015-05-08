@@ -23,7 +23,7 @@ class ElasticSearchDAO():
         """
         Retrieve document _source
         :param doc_type: Filter by doc_type
-        :return a list of documents without any extra information
+        :return: A list of documents without any extra information
         """
         result = []
         try:
@@ -38,7 +38,7 @@ class ElasticSearchDAO():
         """
         Retrive all index's doc_types' names
         :param doc_type: Filter by doc_type
-        :return list of all doc_types
+        :return: List of all doc_types
         """
         doc_types = []
         try:
@@ -53,7 +53,7 @@ class ElasticSearchDAO():
     def __generate_id(self):
         """
         Generate an uuid4 if it does not exists
-        :return a generated id
+        :return: A generated id
         """
         id_list = []
         for r in self.get_all_data():
@@ -69,7 +69,7 @@ class ElasticSearchDAO():
         """
         Create a doc_type inside an index
         :param name: Name of the doc_typel
-        :return the status of document creation
+        :return: The status of document creation
         """
         try:
             if name not in self.__get_doc_types():
@@ -85,7 +85,7 @@ class ElasticSearchDAO():
         """
         Retrieve doc_types cleaned data
         :param doc_type: Filter by doc_type
-        :return a bit cleaned list of existing documents
+        :return: A bit cleaned list of existing documents
         """
         result = []
         try:
@@ -102,7 +102,7 @@ class ElasticSearchDAO():
         :param doc_type: Type of elasticsearch document
         :param body: Document content
         :param id: Document id. If it's none, insert data to an document, else update it
-        :return the status of document insert/update
+        :return: The status of document insert/update
         """
         msg = ""
         try:
@@ -140,7 +140,7 @@ class ElasticSearchDAO():
         Delete a document by given id
         :param doc_type: Type of elasticsearch document
         :param id: Document id
-        :return the status of document delete
+        :return: The status of document delete
         """
         msg = ""
         try:
