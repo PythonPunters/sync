@@ -47,6 +47,18 @@ class CassandraDAO():
 
         return str(generated_id)
 
+    def __cleaned_data(self, table):
+        """
+        :param table: Keyspace's table
+        :return: List of documents without ids
+        """
+        result = []
+        for data in self.get_all_data(table=table):
+            data.pop('id')
+            result.append(data)
+
+        return result
+
     def get_all_data(self, table):
         """
         :param table: Keyspace's table
@@ -70,18 +82,21 @@ class CassandraDAO():
         :return: The status of row insert/update
         """
         try:
-            if not id:
-                # insert a new data
-                logger.info("Inserting a new data.")
-                body['id'] = self.__generate_id(table=table)
-                query = 'INSERT INTO ' + table + ' ' \
-                        + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
-                        ' VALUES ' + str(tuple(body.values()))
+            if body not in self.__generate_id(table=table):
+                if not id:
+                    # insert a new data
+                    logger.info("Inserting a new data.")
+                    body['id'] = self.__generate_id(table=table)
+                    query = 'INSERT INTO ' + table + ' ' \
+                            + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
+                            ' VALUES ' + str(tuple(body.values()))
 
-                logger.info("Query: %s" % query)
-                self.cs.execute(query)
+                    logger.info("Query: %s" % query)
+                    self.cs.execute(query)
+                else:
+                    print('I am here')
             else:
-                print('I am here')
+                logger.error("Document already exists.")
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s" % ex)
 
