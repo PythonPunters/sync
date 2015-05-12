@@ -110,25 +110,25 @@ class ElasticSearchDAO():
             for r in self.get_all_data():
                 logger.info("Id %s found.", r['_id'])
                 id_list.append(str(r['_id']))
-            if not id:
-                # create a new document
-                if body not in self.__cleaned_data():
+            if body not in self.__cleaned_data():
+                if id is None:
+                    # create a new document
                     logger.info("Creating a new document")
                     generated_id = self.__generate_id()
                     self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=generated_id)
                     msg = "Document inserted."
                 else:
-                    logger.error("Document already exists.")
-                    msg = "Document not inserted."
+                    # update the document
+                    logger.info("Updating the document with id: %s", str(id))
+                    if id in id_list:
+                        self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
+                        msg = "Document updated."
+                    else:
+                        logger.error("Id %s não encontrado.", str(id))
+                        msg = "Id %s não encontrado.", str(id)
             else:
-                # update the document
-                logger.info("Updating the document with id: %s", str(id))
-                if id in id_list:
-                    self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
-                    msg = "Document updated."
-                else:
-                    logger.error("Id %s não encontrado.", str(id))
-                    msg = "Id %s não encontrado.", str(id)
+                logger.error("Document already exists.")
+                msg = "Document not inserted."
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)
             msg = "An error occurred."

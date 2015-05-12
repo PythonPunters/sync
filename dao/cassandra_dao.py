@@ -70,7 +70,6 @@ class CassandraDAO():
         for row in rows:
             result.append(dict(row._asdict()))
 
-        print(result)
         return result
 
     def save(self, table, body, id=None):
@@ -82,8 +81,8 @@ class CassandraDAO():
         :return: The status of row insert/update
         """
         try:
-            if body not in self.__generate_id(table=table):
-                if not id:
+            if body not in self.get_all_data(table=table):
+                if id is None:
                     # insert a new data
                     logger.info("Inserting a new data.")
                     body['id'] = self.__generate_id(table=table)
@@ -94,7 +93,22 @@ class CassandraDAO():
                     logger.info("Query: %s" % query)
                     self.cs.execute(query)
                 else:
-                    print('I am here')
+                    logger.info("Updating the document.")
+                    query = 'UPDATE %s' % table + ' SET '
+                    # add quotation mark to id
+                    id = '"%s"' % id
+                    for key, value in body.items():
+                        # add quotation marks if value is string
+                        if isinstance(value, str):
+                            value = '"%s"' % value
+                        query += '%s = %s, ' % (key, value)
+
+                    # removing last comma
+                    query = query[:-2]
+                    query += ' WHERE id = %s' % id
+
+                    logger.info("Query: %s" % query)
+                    self.cs.execute(query)
             else:
                 logger.error("Document already exists.")
         except Exception as ex:
@@ -109,7 +123,7 @@ body = {
         "Don Hall",
         "Chris Williams"
     ],
-    "year": 2014,
+    "year": 2015,
     "genres": [
         "Comédia",
         "Animação"
@@ -117,5 +131,5 @@ body = {
     "title": "Big Hero 6"
 }
 cs = CassandraDAO()
-# cs.save(table='movie', body=body)
-cs.get_all_data(table='movie')
+cs.save(table='movie', body=body, id='c943041c-5256-49c8-9ba2-a663d6537d2c')
+# cs.get_all_data(table='movie')
