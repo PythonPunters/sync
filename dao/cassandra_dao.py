@@ -89,9 +89,9 @@ class CassandraDAO():
                     # insert a new data
                     logger.info("Inserting a new data.")
                     body['id'] = self.__generate_id(table=table)
-                    query = 'INSERT INTO ' + table + ' ' \
+                    query = "INSERT INTO " + table + " " \
                             + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
-                            ' VALUES ' + str(tuple(body.values()))
+                            " VALUES " + str(tuple(body.values()))
 
                     logger.info("Query: %s" % query)
                     self.cs.execute(query)
@@ -129,4 +129,3 @@ class CassandraDAO():
                 logger.error("Id don't exists.")
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s" % ex)
-
