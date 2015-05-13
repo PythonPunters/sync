@@ -33,15 +33,10 @@ class CassandraDAO():
         :param table: Keyspace's table
         :return: A generated id
         """
-        id_list = []
-        for r in self.get_all_data(table=table):
-            logger.info("Id %s found.", r['id'])
-            id_list.append(str(r['id']))
-
         logger.info("Generating a new uuid.")
         generated_id = str(uuid.uuid4())
 
-        if generated_id in id_list:
+        if generated_id in self.__get_all_ids(table=table):
             logger.info("Uuid already exists. Generating it again.")
             self.__generate_id(table=table)
 
@@ -58,6 +53,14 @@ class CassandraDAO():
             result.append(data)
 
         return result
+
+    def __get_all_ids(self, table):
+        id_list = []
+        for r in self.get_all_data(table=table):
+            logger.info("Id %s found.", r['id'])
+            id_list.append(str(r['id']))
+
+        return id_list
 
     def get_all_data(self, table):
         """
@@ -81,7 +84,7 @@ class CassandraDAO():
         :return: The status of row insert/update
         """
         try:
-            if body not in self.get_all_data(table=table):
+            if body not in self.__cleaned_data(table=table):
                 if id is None:
                     # insert a new data
                     logger.info("Inserting a new data.")
@@ -94,18 +97,18 @@ class CassandraDAO():
                     self.cs.execute(query)
                 else:
                     logger.info("Updating the document.")
-                    query = 'UPDATE %s' % table + ' SET '
+                    query = "UPDATE %s" % table + " SET "
                     # add quotation mark to id
-                    id = '"%s"' % id
+                    id = "'%s'" % id
                     for key, value in body.items():
                         # add quotation marks if value is string
                         if isinstance(value, str):
-                            value = '"%s"' % value
-                        query += '%s = %s, ' % (key, value)
+                            value = "'%s'" % value
+                        query += "%s = %s, " % (key, value)
 
                     # removing last comma
                     query = query[:-2]
-                    query += ' WHERE id = %s' % id
+                    query += " WHERE id = %s" % id
 
                     logger.info("Query: %s" % query)
                     self.cs.execute(query)
@@ -114,22 +117,16 @@ class CassandraDAO():
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s" % ex)
 
-    def delete(self):
-        pass
+    def delete(self, table, id):
+        try:
+            if id in self.__get_all_ids(table=table):
+                # add quotation mark to id
+                id = "'%s'" % id
+                logger.info("Deleting the document.")
+                query = "DELETE FROM %s WHERE id = %s" % (table, id)
+                self.cs.execute(query)
+            else:
+                logger.error("Id don't exists.")
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s" % ex)
 
-
-body = {
-    "director": [
-        "Don Hall",
-        "Chris Williams"
-    ],
-    "year": 2015,
-    "genres": [
-        "Comédia",
-        "Animação"
-    ],
-    "title": "Big Hero 6"
-}
-cs = CassandraDAO()
-cs.save(table='movie', body=body, id='c943041c-5256-49c8-9ba2-a663d6537d2c')
-# cs.get_all_data(table='movie')
