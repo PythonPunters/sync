@@ -2,6 +2,7 @@ from settings import *
 from cassandra.cluster import Cluster, NoHostAvailable
 import logging
 import uuid
+import time
 
 
 # starting the logger
@@ -42,18 +43,6 @@ class CassandraDAO():
 
         return str(generated_id)
 
-    def __cleaned_data(self, table):
-        """
-        :param table: Keyspace's table
-        :return: List of documents without ids
-        """
-        result = []
-        for data in self.get_all_data(table=table):
-            data.pop('id')
-            result.append(data)
-
-        return result
-
     def __get_all_ids(self, table):
         id_list = []
         for r in self.get_all_data(table=table):
@@ -75,6 +64,18 @@ class CassandraDAO():
 
         return result
 
+    def cleaned_data(self, table):
+        """
+        :param table: Keyspace's table
+        :return: List of documents without ids
+        """
+        result = []
+        for data in self.get_all_data(table=table):
+            data.pop('id')
+            result.append(data)
+
+        return result
+
     def save(self, table, body, id=None):
         """
         Insert or update doc_type data
@@ -84,11 +85,12 @@ class CassandraDAO():
         :return: The status of row insert/update
         """
         try:
-            if body not in self.__cleaned_data(table=table):
+            if body not in self.cleaned_data(table=table):
                 if id is None:
                     # insert a new data
                     logger.info("Inserting a new data.")
                     body['id'] = self.__generate_id(table=table)
+                    body['saved_at'] = "%s" % time.time()
                     query = "INSERT INTO " + table + " " \
                             + str(tuple(body.keys())).replace("'", "").replace('"', '') + \
                             " VALUES " + str(tuple(body.values()))
@@ -97,6 +99,7 @@ class CassandraDAO():
                     self.cs.execute(query)
                 else:
                     logger.info("Updating the document.")
+                    body['saved_at'] = "%s" % time.time()
                     query = "UPDATE %s" % table + " SET "
                     # add quotation mark to id
                     id = "'%s'" % id

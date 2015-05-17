@@ -2,6 +2,7 @@ from settings import *
 import elasticsearch
 import logging
 import uuid
+import time
 
 # starting the logger
 logging.basicConfig(filename=LOG_DIR + 'elasticsearch_dao.log', level=logging.DEBUG, filemode='w')
@@ -18,21 +19,6 @@ class ElasticSearchDAO():
         # creating connection
         logger.info("Creating connection")
         self.es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
-
-    def __cleaned_data(self, doc_type=None):
-        """
-        Retrieve document _source
-        :param doc_type: Filter by doc_type
-        :return: A list of documents without any extra information
-        """
-        result = []
-        try:
-            for r in self.get_all_data(doc_type=doc_type):
-                logger.info("Found document _source %s", r)
-                result.append(r['_source'])
-        except Exception as ex:
-            logger.exception("An error ocurred. More info: %s", ex)
-        return result
 
     def __get_doc_types(self, doc_type=None):
         """
@@ -96,6 +82,21 @@ class ElasticSearchDAO():
             logger.exception("An error ocurred. More info: %s", ex)
         return result
 
+    def cleaned_data(self, doc_type=None):
+        """
+        Retrieve document _source
+        :param doc_type: Filter by doc_type
+        :return: A list of documents without any extra information
+        """
+        result = []
+        try:
+            for r in self.get_all_data(doc_type=doc_type):
+                logger.info("Found document _source %s", r)
+                result.append(r['_source'])
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s", ex)
+        return result
+
     def save(self, doc_type, body, id=None):
         """
         Insert or update doc_type data
@@ -110,16 +111,18 @@ class ElasticSearchDAO():
             for r in self.get_all_data():
                 logger.info("Id %s found.", r['_id'])
                 id_list.append(str(r['_id']))
-            if body not in self.__cleaned_data():
+            if body not in self.cleaned_data():
                 if id is None:
                     # create a new document
                     logger.info("Creating a new document")
+                    body['saved_at'] = time.time()
                     generated_id = self.__generate_id()
                     self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=generated_id)
                     msg = "Document inserted."
                 else:
                     # update the document
                     logger.info("Updating the document with id: %s", str(id))
+                    body['saved_at'] = time.time()
                     if id in id_list:
                         self.es.index(index=DATABASE, doc_type=doc_type, body=body, id=id)
                         msg = "Document updated."
