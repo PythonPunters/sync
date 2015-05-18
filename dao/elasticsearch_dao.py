@@ -20,22 +20,6 @@ class ElasticSearchDAO():
         logger.info("Creating connection")
         self.es = elasticsearch.Elasticsearch(**ELASTICSEARCH_CONNECTION)
 
-    def __get_doc_types(self, doc_type=None):
-        """
-        Retrive all index's doc_types' names
-        :param doc_type: Filter by doc_type
-        :return: List of all doc_types
-        """
-        doc_types = []
-        try:
-            for r in self.get_all_data(doc_type=doc_type):
-                logger.info("Found doc_type %s", r)
-                doc_types.append(r)
-        except Exception as ex:
-            logger.exception("An error ocurred. More info: %s", ex)
-
-        return doc_types
-
     def __generate_id(self):
         """
         Generate an uuid4 if it does not exists
@@ -51,6 +35,22 @@ class ElasticSearchDAO():
             self.__generate_id()
         return generated_id
 
+    def get_doc_types(self, doc_type=None):
+        """
+        Retrive all index's doc_types' names
+        :param doc_type: Filter by doc_type
+        :return: List of all doc_types
+        """
+        doc_types = []
+        try:
+            for r in self.get_all_data(doc_type=doc_type):
+                logger.info("Found doc_type %s", r)
+                doc_types.append(r['_type'])
+        except Exception as ex:
+            logger.exception("An error ocurred. More info: %s", ex)
+
+        return doc_types
+
     def create_doc_type(self, name):
         """
         Create a doc_type inside an index
@@ -58,7 +58,7 @@ class ElasticSearchDAO():
         :return: The status of document creation
         """
         try:
-            if name not in self.__get_doc_types():
+            if name not in self.get_doc_types():
                 logger.info("Creating a new doc_type")
                 self.es.create(DATABASE, doc_type=name, body={}, id=str(uuid.uuid4()))
                 return "Document created."
@@ -92,6 +92,7 @@ class ElasticSearchDAO():
         try:
             for r in self.get_all_data(doc_type=doc_type):
                 logger.info("Found document _source %s", r)
+                r['_source'].pop('saved_at')
                 result.append(r['_source'])
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s", ex)

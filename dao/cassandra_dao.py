@@ -1,5 +1,6 @@
 from settings import *
 from cassandra.cluster import Cluster, NoHostAvailable
+from cassandra.metadata import KeyspaceMetadata
 import logging
 import uuid
 import time
@@ -22,7 +23,7 @@ class CassandraDAO():
             logger.info("Creating connection.")
             self.cluster = Cluster(**CASSANDRA_CONNECTION)
             self.cs = self.cluster.connect(DATABASE)
-            self.cs.execute("USE %s" % DATABASE)
+            self.cs.set_keyspace(DATABASE)
         except NoHostAvailable as ex:
             logger.exception("Invalid host name. More info: %s" % ex)
         except Exception as ex:
@@ -51,6 +52,15 @@ class CassandraDAO():
 
         return id_list
 
+    def get_all_tables(self):
+        """
+        Get all existing tables' names
+        :return: List of existing tables
+        """
+        result = list(self.cluster.metadata.keyspaces[DATABASE].tables.keys())
+
+        return result
+
     def get_all_data(self, table):
         """
         :param table: Keyspace's table
@@ -72,6 +82,7 @@ class CassandraDAO():
         result = []
         for data in self.get_all_data(table=table):
             data.pop('id')
+            data.pop('saved_at')
             result.append(data)
 
         return result
@@ -119,6 +130,9 @@ class CassandraDAO():
                 logger.error("Document already exists.")
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s" % ex)
+        finally:
+            self.cs.shutdown()
+            self.cluster.shutdown()
 
     def delete(self, table, id):
         try:
@@ -132,3 +146,6 @@ class CassandraDAO():
                 logger.error("Id don't exists.")
         except Exception as ex:
             logger.exception("An error ocurred. More info: %s" % ex)
+        finally:
+            self.cs.shutdown()
+            self.cluster.shutdown()
