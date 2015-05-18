@@ -45,6 +45,11 @@ class CassandraDAO():
         return str(generated_id)
 
     def __get_all_ids(self, table):
+        """
+        Get all rows' ids
+        :param table: table to search
+        :return: all rows' ids
+        """
         id_list = []
         for r in self.get_all_data(table=table):
             logger.info("Id %s found.", r['id'])

@@ -10,7 +10,7 @@ logger = logging.getLogger("Synchronizer")
 
 class Synchronizer():
     """
-    Write something cool here
+    Sync data between cassandra end elasticsearch
     """
 
     def __init__(self):
